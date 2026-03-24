@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # GitHub Profile Enhancer 🚀
 
 > A developer analytics dashboard built with React, Redux Toolkit, and the GitHub REST API.
@@ -107,3 +108,5 @@ npm run build
 ## 📄 License
 
 MIT © 2024
+=======
+ git
