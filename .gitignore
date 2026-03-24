@@ -1,0 +1,24 @@
+# node modules
+node_modules/
+
+# logs
+logs
+*.log
+
+# environment variables
+.env
+
+# build folders
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code settings
+.vscode/
+
+# dependency lock files (optional)
+package-lock.json
+yarn.lock
