@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 const BASE = 'https://api.github.com';
@@ -106,9 +106,25 @@ const githubSlice = createSlice({
     compareStatus: 'idle', compareError: null,
     // token
     token: '',
+    // recent searches — persisted to localStorage
+    recentSearches: JSON.parse(localStorage.getItem('gh-recent') || '[]'),
   },
   reducers: {
     setToken(state, action) { state.token = action.payload; },
+    addRecentSearch(state, action) {
+      const username = action.payload;
+      const filtered = state.recentSearches.filter(s => s.login !== username);
+      state.recentSearches = [{ login: username, avatar: action.payload.avatar }, ...filtered].slice(0, 8);
+      localStorage.setItem('gh-recent', JSON.stringify(state.recentSearches));
+    },
+    removeRecentSearch(state, action) {
+      state.recentSearches = state.recentSearches.filter(s => s.login !== action.payload);
+      localStorage.setItem('gh-recent', JSON.stringify(state.recentSearches));
+    },
+    clearRecentSearches(state) {
+      state.recentSearches = [];
+      localStorage.removeItem('gh-recent');
+    },
     clearCompare(state) {
       state.compareUser = null; state.compareRepos = []; state.compareLanguages = [];
       state.compareTotalStars = 0; state.compareTotalForks = 0;
@@ -124,6 +140,11 @@ const githubSlice = createSlice({
         s.user = p.user; s.repos = p.repos; s.languages = p.languages;
         s.topRepos = p.topRepos; s.totalStars = p.totalStars;
         s.totalForks = p.totalForks; s.starsOverTime = p.starsOverTime;
+        // Save to recent searches
+        const entry = { login: p.user.login, avatar: p.user.avatar_url, name: p.user.name || p.user.login };
+        const filtered = s.recentSearches.filter(r => r.login !== entry.login);
+        s.recentSearches = [entry, ...filtered].slice(0, 8);
+        localStorage.setItem('gh-recent', JSON.stringify(s.recentSearches));
       })
       .addCase(fetchUser.rejected, (s, a) => { s.status = 'failed'; s.error = a.payload; })
       .addCase(fetchCompareUser.pending, (s) => { s.compareStatus = 'loading'; s.compareError = null; })
@@ -136,5 +157,5 @@ const githubSlice = createSlice({
   },
 });
 
-export const { setToken, clearCompare, clearError } = githubSlice.actions;
+export const { setToken, clearCompare, clearError, addRecentSearch, removeRecentSearch, clearRecentSearches } = githubSlice.actions;
 export default githubSlice.reducer;
