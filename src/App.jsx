@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUser } from './store/githubSlice';
 import { toggleTheme } from './store/themeSlice';
@@ -14,16 +14,69 @@ const TABS = ['Overview', 'Charts', 'Compare'];
 
 export default function App() {
   const dispatch = useDispatch();
-  const { status, error, token } = useSelector(s => s.github);
+  const { status, error, token, recentSearches } = useSelector(s => s.github);
   const mode = useSelector(s => s.theme.mode);
-  const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [showToken, setShowToken] = useState(false);
+
+  const [query, setQuery]           = useState('');
+  const [activeTab, setActiveTab]   = useState('Overview');
+  const [showToken, setShowToken]   = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [highlighted, setHighlighted]  = useState(-1);
+
+  const inputRef    = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Filter recent searches that match the current query
+  const suggestions = query.trim().length > 0
+    ? recentSearches.filter(s =>
+        s.login.toLowerCase().includes(query.toLowerCase()) ||
+        (s.name && s.name.toLowerCase().includes(query.toLowerCase()))
+      )
+    : recentSearches;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+        inputRef.current && !inputRef.current.contains(e.target)
+      ) {
+        setShowDropdown(false);
+        setHighlighted(-1);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const runSearch = (username) => {
+    if (!username.trim()) return;
+    dispatch(fetchUser({ username: username.trim(), token }));
+    setQuery(username.trim());
+    setShowDropdown(false);
+    setHighlighted(-1);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    dispatch(fetchUser({ username: query.trim(), token }));
+    runSearch(query);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showDropdown || !suggestions.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlighted(h => Math.min(h + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlighted(h => Math.max(h - 1, -1));
+    } else if (e.key === 'Enter' && highlighted >= 0) {
+      e.preventDefault();
+      runSearch(suggestions[highlighted].login);
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+      setHighlighted(-1);
+    }
   };
 
   return (
@@ -37,10 +90,68 @@ export default function App() {
           <span className="brand-name"><span>github</span> profile enhancer</span>
         </div>
 
-        <form className="topbar-search" onSubmit={handleSearch}>
-          <input className="search-input" value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search GitHub username…" />
+        {/* Search with autocomplete */}
+        <form className="topbar-search" onSubmit={handleSearch}
+          style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <input
+              ref={inputRef}
+              className="search-input"
+              value={query}
+              onChange={e => {
+                setQuery(e.target.value);
+                setShowDropdown(true);
+                setHighlighted(-1);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search GitHub username…"
+              autoComplete="off"
+            />
+
+            {/* Autocomplete dropdown */}
+            {showDropdown && suggestions.length > 0 && (
+              <div ref={dropdownRef} style={{
+                position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+                background: 'var(--bg-surface)', border: '1px solid var(--border)',
+                borderRadius: 10, zIndex: 999, overflow: 'hidden',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+              }}>
+                <div style={{ padding: '8px 12px 4px',
+                  fontSize: 10, color: 'var(--text-muted)',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {query.trim() ? 'Matching history' : 'Recent searches'}
+                </div>
+                {suggestions.map((s, i) => (
+                  <div key={s.login}
+                    onMouseDown={() => runSearch(s.login)}
+                    onMouseEnter={() => setHighlighted(i)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '8px 12px', cursor: 'pointer', transition: 'background 0.1s',
+                      background: highlighted === i ? 'var(--bg-elevated)' : 'transparent',
+                    }}>
+                    <img src={s.avatar} alt={s.login}
+                      style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {s.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--accent)',
+                        fontFamily: 'JetBrains Mono, monospace' }}>
+                        @{s.login}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>↵</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button type="submit" className="btn btn-primary"
             disabled={status === 'loading'}>
             {status === 'loading' ? '⏳' : 'Analyze'}
@@ -83,7 +194,7 @@ export default function App() {
             </>
           )}
 
-          {activeTab === 'Charts' && <Charts />}
+          {activeTab === 'Charts'  && <Charts />}
           {activeTab === 'Compare' && <Compare />}
         </main>
       </div>
