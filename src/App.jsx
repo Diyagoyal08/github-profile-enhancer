@@ -93,7 +93,7 @@ export default function App() {
         {/* Search with autocomplete */}
         <form className="topbar-search" onSubmit={handleSearch}
           style={{ position: 'relative' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <input
               ref={inputRef}
               className="search-input"
@@ -111,41 +111,26 @@ export default function App() {
 
             {/* Autocomplete dropdown */}
             {showDropdown && suggestions.length > 0 && (
-              <div ref={dropdownRef} style={{
-                position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
-                background: 'var(--bg-surface)', border: '1px solid var(--border)',
-                borderRadius: 10, zIndex: 999, overflow: 'hidden',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-              }}>
-                <div style={{ padding: '8px 12px 4px',
-                  fontSize: 10, color: 'var(--text-muted)',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <div ref={dropdownRef} className="autocomplete-dropdown">
+                <div className="autocomplete-label">
                   {query.trim() ? 'Matching history' : 'Recent searches'}
                 </div>
                 {suggestions.map((s, i) => (
                   <div key={s.login}
                     onMouseDown={() => runSearch(s.login)}
                     onMouseEnter={() => setHighlighted(i)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '8px 12px', cursor: 'pointer', transition: 'background 0.1s',
-                      background: highlighted === i ? 'var(--bg-elevated)' : 'transparent',
-                    }}>
+                    className={`autocomplete-item ${highlighted === i ? 'highlighted' : ''}`}>
                     <img src={s.avatar} alt={s.login}
                       style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600,
-                        color: 'var(--text-primary)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div className="autocomplete-item-content">
+                      <div className="autocomplete-item-name">
                         {s.name}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--accent)',
-                        fontFamily: 'JetBrains Mono, monospace' }}>
+                      <div className="autocomplete-item-login">
                         @{s.login}
                       </div>
                     </div>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>↵</span>
+                    <span className="autocomplete-item-key">↵</span>
                   </div>
                 ))}
               </div>

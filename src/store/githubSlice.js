@@ -3,8 +3,10 @@ import axios from 'axios';
 
 const BASE = 'https://api.github.com';
 
-const getHeaders = (token) =>
-  token ? { Authorization: `Bearer ${token}` } : {};
+const getHeaders = (token) => ({
+  Accept: 'application/vnd.github+json',
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+});
 
 // ── Fetch single user profile + repos ──────────────────────────────────────
 export const fetchUser = createAsyncThunk(
@@ -105,12 +107,19 @@ const githubSlice = createSlice({
     compareTotalStars: 0, compareTotalForks: 0,
     compareStatus: 'idle', compareError: null,
     // token
-    token: '',
+    token: localStorage.getItem('gh-token') || '',
     // recent searches — persisted to localStorage
     recentSearches: JSON.parse(localStorage.getItem('gh-recent') || '[]'),
   },
   reducers: {
-    setToken(state, action) { state.token = action.payload; },
+    setToken(state, action) {
+      state.token = action.payload;
+      if (action.payload) {
+        localStorage.setItem('gh-token', action.payload);
+      } else {
+        localStorage.removeItem('gh-token');
+      }
+    },
     addRecentSearch(state, action) {
       const username = action.payload;
       const filtered = state.recentSearches.filter(s => s.login !== username);

@@ -3,7 +3,8 @@ import { useSelector } from 'react-redux';
 import { getLangColor, formatNumber, timeAgo } from '../utils/helpers';
 
 export default function RepoGrid() {
-  const { topRepos, status } = useSelector(s => s.github);
+  const { topRepos, repos, status } = useSelector(s => s.github);
+  const displayRepos = topRepos.length ? topRepos : repos.slice(0, 6);
 
   if (status === 'loading') {
     return (
@@ -19,11 +20,19 @@ export default function RepoGrid() {
     );
   }
 
-  if (!topRepos.length) return null;
+  if (status !== 'loading' && !displayRepos.length) {
+    return (
+      <div className="empty-state" style={{ marginTop: 24 }}>
+        <div className="empty-state-icon">📦</div>
+        <div className="empty-state-title">No repositories found</div>
+        <div className="empty-state-desc">This GitHub profile has no public repositories or they could not be loaded.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="repo-grid">
-      {topRepos.map(repo => (
+      {displayRepos.map(repo => (
         <a key={repo.id} className="repo-card"
           href={repo.html_url} target="_blank" rel="noreferrer">
           <div className="repo-name">{repo.name}</div>

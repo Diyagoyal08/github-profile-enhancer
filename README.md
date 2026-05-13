@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # GitHub Profile Enhancer 🚀
 
 > A developer analytics dashboard built with React, Redux Toolkit, and the GitHub REST API.
@@ -18,6 +17,7 @@
 - ⚡ **Redux Toolkit** — Global state with async thunks for all API calls
 - 💀 **Skeleton Loaders** — Graceful loading states during API fetch
 - 🔑 **Token Support** — Add a GitHub PAT to avoid rate limits
+- 📱 **Fully Responsive** — Works seamlessly on mobile, tablet, and desktop
 
 ## 🛠️ Tech Stack
 
@@ -88,15 +88,44 @@ src/
 - **Recharts** — composing `BarChart`, `PieChart`, `RadarChart` with custom tooltips
 - **CSS custom properties** — building a complete dark/light theme system with one toggle
 - **Component reusability** — designing metric cards and repo cards as generic, data-driven components
+- **Responsive design** — mobile-first approach with CSS media queries for all breakpoints
 
 ## 📦 Deployment
 
-Deploy to Vercel (recommended):
+### Deploy to Vercel
 
+1. **Install Vercel CLI** (optional):
 ```bash
 npm install -g vercel
+```
+
+2. **Push to GitHub** (recommended):
+```bash
+git add .
+git commit -m "Ready for Vercel deployment"
+git push origin main
+```
+
+3. **Deploy** (via dashboard):
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Add New" → "Project"
+   - Select your GitHub repository
+   - Framework: **Create React App**
+   - Environment variables: None required (GitHub API is public)
+   - Click "Deploy"
+
+Or via CLI:
+```bash
 vercel
 ```
+
+### Environment Variables (Optional)
+
+If using a GitHub token at build time (not recommended for frontend):
+- No build-time variables are required for this project
+- Tokens should only be added by users at runtime via the UI
+
+
 
 Or GitHub Pages:
 
